@@ -251,4 +251,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { runThreeWayComparison, quickTest }; 
+module.exports = { runThreeWayComparison, quickTest };

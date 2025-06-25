@@ -232,4 +232,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { runComparison, runStressTest }; 
+module.exports = { runComparison, runStressTest };

@@ -140,8 +140,8 @@ implementations.forEach(({ name, Logger, testDir }) => {
         expect(testLogger.getStats().currentIndex).toBe(2);
 
         testLogger.log('info', { step: 3 });
-                 // For power-of-2 implementations, index may wrap differently
-         if (capacity === 4) { // Bit-optimized version rounds 3 up to 4
+        // For power-of-2 implementations, index may wrap differently
+        if (capacity === 4) { // Bit-optimized version rounds 3 up to 4
           expect(testLogger.getStats().currentIndex).toBe(3);
         } else {
           expect(testLogger.getStats().currentIndex).toBe(0);
@@ -175,7 +175,7 @@ implementations.forEach(({ name, Logger, testDir }) => {
 
       test('should flush post-error context after buffer cycles', () => {
         const capacity = logger.getStats().capacity;
-        
+
         // Add context, then error
         logger.log('info', { message: 'context 1' });
         logger.log('error', { message: 'error occurred' });
@@ -320,7 +320,7 @@ implementations.forEach(({ name, Logger, testDir }) => {
         const iterations = capacity * 10; // Log 10x capacity
 
         for (let i = 0; i < iterations; i++) {
-          logger.log('memory', { 
+          logger.log('memory', {
             iteration: i,
             data: `some data for iteration ${i}`,
             metadata: { timestamp: Date.now() }
@@ -344,7 +344,7 @@ implementations.forEach(({ name, Logger, testDir }) => {
 
         const buffer = logger.getCurrentBuffer();
         expect(Array.isArray(buffer)).toBe(true);
-        
+
         buffer.forEach(entry => {
           expect(entry).toHaveProperty('ts');
           expect(entry).toHaveProperty('flushId');
@@ -358,7 +358,7 @@ implementations.forEach(({ name, Logger, testDir }) => {
 
       test('getStats returns consistent format', () => {
         const stats = logger.getStats();
-        
+
         expect(stats).toHaveProperty('capacity');
         expect(stats).toHaveProperty('currentIndex');
         expect(stats).toHaveProperty('flushId');
@@ -390,10 +390,10 @@ describe('Cross-Implementation Compatibility', () => {
 
   test('all implementations produce compatible log files', () => {
     const testData = { message: 'compatibility test', value: 42 };
-    
+
     implementations.forEach(({ name, Logger }) => {
       const logger = new Logger(5, `${testDir}-${name.toLowerCase()}`);
-      
+
       // Add context and trigger error
       logger.log('info', { context: `from ${name}` });
       logger.log('error', testData);
@@ -405,7 +405,7 @@ describe('Cross-Implementation Compatibility', () => {
 
       // Parse and validate structure
       const content = JSON.parse(fs.readFileSync(
-        path.join(`${testDir}-${name.toLowerCase()}`, errorFile), 
+        path.join(`${testDir}-${name.toLowerCase()}`, errorFile),
         'utf8'
       ));
 
@@ -433,14 +433,14 @@ describe('Cross-Implementation Compatibility', () => {
 
     const results = implementations.map(({ name, Logger }) => {
       const logger = new Logger(10, `${testDir}-${name.toLowerCase()}`);
-      
+
       testCases.forEach(testCase => {
         logger.log(testCase.event, testCase.data);
       });
 
       const buffer = logger.getCurrentBuffer();
       cleanupLogDir(`${testDir}-${name.toLowerCase()}`);
-      
+
       return { name, buffer };
     });
 
@@ -451,7 +451,7 @@ describe('Cross-Implementation Compatibility', () => {
     // Compare event types and basic structure
     results.forEach(result => {
       expect(result.buffer).toHaveLength(testCases.length);
-      
+
       result.buffer.forEach((entry, index) => {
         expect(entry.event).toBe(testCases[index].event);
         expect(entry).toHaveProperty('ts');
@@ -460,4 +460,4 @@ describe('Cross-Implementation Compatibility', () => {
       });
     });
   });
-}); 
+});

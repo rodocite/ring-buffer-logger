@@ -86,13 +86,13 @@ class RingBufferLoggerUltra {
     this._ensureLogDir();
   }
 
-    // Ultra-fast djb2 hash with bit operations
+  // Ultra-fast djb2 hash with bit operations
   _hash(str) {
     if (str == null) str = '';
     let hash = 5381;
     const len = str.length;
     let i = 0;
-    
+
     // Process 4 characters at a time where possible
     while (i + 3 < len) {
       hash = ((hash << HASH_SHIFT) + hash) + str.charCodeAt(i++);
@@ -100,12 +100,12 @@ class RingBufferLoggerUltra {
       hash = ((hash << HASH_SHIFT) + hash) + str.charCodeAt(i++);
       hash = ((hash << HASH_SHIFT) + hash) + str.charCodeAt(i++);
     }
-    
+
     // Handle remaining characters
     while (i < len) {
       hash = ((hash << HASH_SHIFT) + hash) + str.charCodeAt(i++);
     }
-    
+
     return (hash >>> 0) & INT32_MAX; // Keep as positive 32-bit int
   }
 

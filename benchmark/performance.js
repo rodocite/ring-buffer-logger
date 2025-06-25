@@ -67,9 +67,9 @@ const testWithSilentConsole = (testFn, ...args) => {
 const testBasicLogging = (iterations = 100000) => {
   const logDir = './perf-basic';
   cleanup(logDir);
-  
+
   const logger = new RingBufferLogger(1000, logDir);
-  
+
   const { duration } = benchmark.time('Basic logging', () => {
     for (let i = 0; i < iterations; i++) {
       logger.log('info', {
@@ -79,7 +79,7 @@ const testBasicLogging = (iterations = 100000) => {
       });
     }
   });
-  
+
   cleanup(logDir);
   return { duration, throughput: benchmark.formatThroughput(iterations, duration) };
 };
@@ -87,22 +87,22 @@ const testBasicLogging = (iterations = 100000) => {
 const testErrorHandling = (iterations = 1000) => {
   const logDir = './perf-error';
   cleanup(logDir);
-  
+
   const logger = new RingBufferLogger(100, logDir);
-  
+
   const { duration } = benchmark.time('Error handling', () => {
     for (let i = 0; i < iterations; i++) {
       // Log some context
       logger.log('info', { step: 'processing', item: i });
       logger.log('debug', { details: `Processing item ${i}` });
-      
+
       // Trigger error every 10th iteration
       if (i % 10 === 0) {
         logger.log('error', { message: `Error at iteration ${i}`, code: 'TEST_ERROR' });
       }
     }
   });
-  
+
   cleanup(logDir);
   return { duration, throughput: benchmark.formatThroughput(iterations, duration) };
 };
@@ -110,9 +110,9 @@ const testErrorHandling = (iterations = 1000) => {
 const testLargeObjects = (iterations = 1000) => {
   const logDir = './perf-large';
   cleanup(logDir);
-  
+
   const logger = new RingBufferLogger(50, logDir);
-  
+
   // Create large test object
   const largeObject = {
     id: 12345,
@@ -128,7 +128,7 @@ const testLargeObjects = (iterations = 1000) => {
       }
     }
   };
-  
+
   const { duration } = benchmark.time('Large objects', () => {
     for (let i = 0; i < iterations; i++) {
       logger.log('data', {
@@ -138,7 +138,7 @@ const testLargeObjects = (iterations = 1000) => {
       });
     }
   });
-  
+
   cleanup(logDir);
   return { duration, throughput: benchmark.formatThroughput(iterations, duration) };
 };
@@ -198,4 +198,4 @@ if (require.main === module) {
   runBenchmarks();
 }
 
-module.exports = { runBenchmarks, testBasicLogging, testErrorHandling, testLargeObjects }; 
+module.exports = { runBenchmarks, testBasicLogging, testErrorHandling, testLargeObjects };

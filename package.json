@@ -33,8 +33,8 @@
   "jest": {
     "testEnvironment": "node",
     "collectCoverageFrom": [
-      "src/**/*.js",
-      "index.js"
+      "index.js",
+      "index-*.js"
     ],
     "coverageDirectory": "coverage",
     "coverageReporters": [
@@ -44,6 +44,6 @@
     ]
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   }
 } 

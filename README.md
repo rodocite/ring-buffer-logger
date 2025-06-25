@@ -2,7 +2,7 @@
 
 A circular buffer logger implementation that keeps recent log entries in memory and writes them to disk when errors occur.
 
-*Note: This is a local implementation/exercise, not a published package.*
+_Note: This is a local implementation/exercise, not a published package._
 
 ## How It Works
 
@@ -488,7 +488,7 @@ This project includes multiple optimized implementations to demonstrate aggressi
 ### Available Implementations
 
 1. **`index.js`** - **Original Implementation** - Standard JavaScript patterns, readable and maintainable
-2. **`index-object-pooled.js`** - **Object-Pooled Implementation** - Memory allocation optimizations and hash-based comparisons  
+2. **`index-object-pooled.js`** - **Object-Pooled Implementation** - Memory allocation optimizations and hash-based comparisons
 3. **`index-bit-optimized.js`** - **Bit-Optimized Implementation** - Low-level bit operations, C-style techniques, and aggressive memory management
 
 ### Performance Results
@@ -496,18 +496,21 @@ This project includes multiple optimized implementations to demonstrate aggressi
 Benchmarked on Node.js v18.20.5, macOS ARM64:
 
 #### Micro Benchmark (1,000,000 operations)
+
 - **Original**: 1,855,764 ops/sec
 - **Object-Pooled**: 3,705,791 ops/sec (**2.00x speedup**, 49.9% faster)
 - **Bit-Optimized**: 4,848,426 ops/sec (**2.61x speedup**, 61.7% faster)
 
 #### Basic Logging (500,000 operations)
-- **Original**: 859,509 ops/sec  
+
+- **Original**: 859,509 ops/sec
 - **Object-Pooled**: 2,367,118 ops/sec (**2.75x speedup**, 63.7% faster)
 - **Bit-Optimized**: 3,586,562 ops/sec (**4.17x speedup**, 76.0% faster)
 
 #### Complex Objects (50,000 operations)
+
 - **Original**: 63,947 ops/sec
-- **Object-Pooled**: 234,159 ops/sec (**3.66x speedup**, 72.7% faster)  
+- **Object-Pooled**: 234,159 ops/sec (**3.66x speedup**, 72.7% faster)
 - **Bit-Optimized**: 3,131,516 ops/sec (**48.97x speedup**, 98.0% faster) 🔥
 
 ### Code Evolution and Optimization Techniques
@@ -515,7 +518,9 @@ Benchmarked on Node.js v18.20.5, macOS ARM64:
 This project demonstrates a systematic approach to JavaScript performance optimization, showing how code can evolve from readable baseline to highly optimized implementations.
 
 #### Stage 1: Original Implementation (`index.js`)
+
 The baseline implementation focuses on **readability and maintainability**:
+
 - Standard JavaScript patterns and idioms
 - Clear variable names and straightforward logic
 - Modulo operations for ring buffer indexing: `(this.currentIndex + 1) % this.capacity`
@@ -526,9 +531,11 @@ The baseline implementation focuses on **readability and maintainability**:
 **Philosophy**: "Make it work first, optimize later"
 
 #### Stage 2: Object-Pooled Implementation (`index-object-pooled.js`)
+
 The first optimization stage focuses on **memory allocation efficiency**:
 
 **Key Optimizations:**
+
 - **Object Pooling**: Reuse pre-allocated objects to eliminate GC pressure
 - **Hash-based Event Detection**: Replace string comparisons with fast djb2 hash algorithm
 - **Power-of-2 Buffer Sizing**: Round capacity to nearest power of 2 for bit operations
@@ -540,9 +547,11 @@ The first optimization stage focuses on **memory allocation efficiency**:
 **Philosophy**: "Eliminate allocation overhead and use faster algorithms"
 
 #### Stage 3: Bit-Optimized Implementation (`index-bit-optimized.js`)
+
 The final optimization stage uses **C-style low-level techniques**:
 
 **Advanced Optimizations:**
+
 - **Pre-computed Hash Constants**: Event types hashed at initialization for O(1) lookup
 - **Unrolled Hash Loops**: Process 4 characters simultaneously for faster hashing
 - **Integer Boolean Flags**: Use 0/1 instead of true/false for better CPU cache efficiency
@@ -555,11 +564,119 @@ The final optimization stage uses **C-style low-level techniques**:
 **Performance Impact**: Up to 49x speedup for complex object processing
 **Philosophy**: "Squeeze every CPU cycle using low-level optimization techniques"
 
+### Benchmark Data Examples
+
+To understand the performance differences, here are examples of the data structures used in benchmarks:
+
+#### Simple Objects (Basic Logging)
+```javascript
+// Typical simple log entry
+{
+  message: "User login successful",
+  timestamp: 1703123456789,
+  data: { 
+    userId: 12345, 
+    sessionId: "abc123",
+    ip: "192.168.1.1"
+  }
+}
+
+// API request logging
+{
+  method: "POST",
+  endpoint: "/api/users",
+  duration: 45,
+  statusCode: 201,
+  userId: 67890
+}
+```
+
+#### Complex Objects (Stress Testing)
+```javascript
+// Large nested object with arrays and deep nesting
+{
+  id: 12345,
+  name: "Complex Data Structure",
+  data: "x".repeat(2000), // Large string (2KB)
+  nested: {
+    level1: {
+      level2: {
+        level3: {
+          value: "deeply nested data",
+          array: [
+            { id: 0, value: 0, metadata: { type: "test", created: Date.now() } },
+            { id: 1, value: 2, metadata: { type: "test", created: Date.now() } },
+            // ... 48 more similar objects
+          ]
+        }
+      }
+    }
+  },
+  metadata: {
+    created: Date.now(),
+    tags: ["performance", "test", "benchmark", "complex"],
+    config: { 
+      retry: 3, 
+      timeout: 5000,
+      features: ["caching", "compression", "validation"]
+    },
+    stats: {
+      processedItems: 1000,
+      errors: 0,
+      avgProcessingTime: 23.5
+    }
+  }
+}
+```
+
+The **48x performance improvement** for complex objects comes from the bit-optimized implementation's ability to:
+- Quickly identify object types and use specialized handlers
+- Avoid redundant JSON serialization through smart caching
+- Use pre-allocated object pools to eliminate garbage collection
+- Process nested structures with minimal memory allocations
+
+#### Real-World Performance Impact
+
+```javascript
+// High-frequency API logging scenario
+const logger = new RingBufferLogger(1000, './api-logs');
+
+// Simple objects: ~50,000 requests/minute
+app.use((req, res, next) => {
+  logger.log('request', {
+    method: req.method,
+    url: req.url,
+    userAgent: req.get('User-Agent'),
+    timestamp: Date.now()
+  });
+  next();
+});
+
+// Complex objects: Database query results, user profiles, etc.
+db.on('query', (result) => {
+  logger.log('database', {
+    query: result.sql,
+    duration: result.duration,
+    rows: result.rows,
+    metadata: result.metadata, // Large nested object
+    performance: result.performanceMetrics
+  });
+});
+```
+
+**Performance Impact:**
+- **Original**: Can handle ~850,000 simple logs/sec, ~64,000 complex logs/sec
+- **Object-Pooled**: Can handle ~2,400,000 simple logs/sec, ~234,000 complex logs/sec  
+- **Bit-Optimized**: Can handle ~3,600,000 simple logs/sec, ~3,100,000 complex logs/sec
+
+For a high-traffic API processing complex database results, the bit-optimized version can handle **48x more throughput** without dropping logs or impacting application performance.
+
 ### Code Comparison Examples
 
 Here are key differences between the implementations to illustrate the optimization evolution:
 
 #### Ring Buffer Indexing
+
 ```javascript
 // Original: Clear but slower
 this.currentIndex = (this.currentIndex + 1) % this.capacity;
@@ -572,6 +689,7 @@ this.currentIndex = (this.currentIndex + 1) & this.capacityMask;
 ```
 
 #### Event Type Detection
+
 ```javascript
 // Original: String comparison
 if (event === 'error') {
@@ -592,6 +710,7 @@ if (eventHash === ERROR_HASH_CONST) {
 ```
 
 #### Object Cloning
+
 ```javascript
 // Original: JSON-based (safe but slow)
 const cloned = JSON.parse(JSON.stringify(data));
