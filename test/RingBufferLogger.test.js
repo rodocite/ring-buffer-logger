@@ -113,71 +113,71 @@ describe('RingBufferLogger', () => {
 
     test('index rollover behavior', () => {
       const logger = new RingBufferLogger(3, testLogDir);
-      
+
       // Test initial state
       expect(logger.getStats().currentIndex).toBe(0);
-      
+
       // Add entries and track index progression
       logger.log('info', { step: 1 });
       expect(logger.getStats().currentIndex).toBe(1);
-      
+
       logger.log('info', { step: 2 });
       expect(logger.getStats().currentIndex).toBe(2);
-      
+
       logger.log('info', { step: 3 });
       expect(logger.getStats().currentIndex).toBe(0); // Should wrap to 0
-      
+
       logger.log('info', { step: 4 });
       expect(logger.getStats().currentIndex).toBe(1); // Should continue wrapping
-      
+
       // Verify buffer contents after rollover
       // _snapshot starts from current index and goes chronologically (oldest first)
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(3);
       expect(buffer[0].data.step).toBe(2); // Oldest remaining entry
-      expect(buffer[1].data.step).toBe(3); // Middle entry  
+      expect(buffer[1].data.step).toBe(3); // Middle entry
       expect(buffer[2].data.step).toBe(4); // Most recent entry
     });
 
     test('multiple complete rollovers', () => {
       const logger = new RingBufferLogger(3, testLogDir);
-      
+
       // Log enough entries to do multiple complete rollovers
       for (let i = 1; i <= 10; i++) {
         logger.log('info', { iteration: i });
       }
-      
+
       // After 10 entries in buffer of 3, index should be at (10 % 3) = 1
       expect(logger.getStats().currentIndex).toBe(1);
-      
+
       // Buffer should contain the last 3 entries (8, 9, 10) in chronological order
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(3);
-      
+
       // _snapshot returns entries in chronological order (oldest first)
       expect(buffer[0].data.iteration).toBe(8);  // Oldest of the 3 remaining
-      expect(buffer[1].data.iteration).toBe(9);  // Middle 
+      expect(buffer[1].data.iteration).toBe(9);  // Middle
       expect(buffer[2].data.iteration).toBe(10); // Most recent
     });
 
     test('rollover with mixed entry types', () => {
       const logger = new RingBufferLogger(4, testLogDir);
-      
-      // Mix different types of entries across rollover  
+
+      // Mix different types of entries across rollover
       logger.log('info', { type: 'info', id: 1 });
       logger.log('debug', { type: 'debug', id: 2 });
       logger.log('warn', { type: 'warn', id: 3 });
       // Skip error type as it will trigger flush and clear buffer
       logger.log('trace', { type: 'trace', id: 4 });
-      
+
       // This should trigger rollover and overwrite first entry
       logger.log('info', { type: 'info', id: 5 });
-      
+
       expect(logger.getStats().currentIndex).toBe(1);
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(4);
-      
+
       // _snapshot returns entries in chronological order (oldest first)
       expect(buffer[0].data.id).toBe(2); // Original at index 1 (oldest remaining)
       expect(buffer[1].data.id).toBe(3); // Original at index 2
@@ -341,35 +341,35 @@ describe('RingBufferLogger', () => {
 
     test('should handle capacity of 1', () => {
       const tinyLogger = new RingBufferLogger(1, testLogDir);
-      
+
       tinyLogger.log('info', { message: 'first' });
       tinyLogger.log('info', { message: 'second' }); // Should overwrite first
-      
+
       const buffer = tinyLogger.getCurrentBuffer();
       expect(buffer).toHaveLength(1);
       expect(buffer[0].data.message).toBe('second');
-      
+
       // Test error handling with capacity 1
       // With capacity 1, we get pre-error flush immediately, then when the buffer
       // cycles back to the error position (after 1 more log), we get post-error flush
       tinyLogger.log('error', { message: 'error' });
-      
+
       // Add one more log to trigger the post-error flush
       tinyLogger.log('info', { message: 'after error' });
-      
+
       const files = fs.readdirSync(testLogDir);
       expect(files.length).toBeGreaterThanOrEqual(1); // At least pre-error, possibly both
     });
 
     test('should handle capacity of 0', () => {
       const zeroLogger = new RingBufferLogger(0, testLogDir);
-      
+
       // Should not crash with zero capacity
       expect(() => {
         zeroLogger.log('info', { message: 'test' });
         zeroLogger.log('error', { message: 'error' });
       }).not.toThrow();
-      
+
       const buffer = zeroLogger.getCurrentBuffer();
       expect(buffer).toHaveLength(0);
     });
@@ -378,7 +378,7 @@ describe('RingBufferLogger', () => {
       logger.log('info', null);
       logger.log('info', undefined);
       logger.log('info', { value: null, other: undefined });
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(3);
       expect(buffer[0].data).toBeNull();
@@ -395,7 +395,7 @@ describe('RingBufferLogger', () => {
         negativeInfinity: -Infinity,
         nan: NaN
       };
-      
+
       logger.log('info', largeData);
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data.maxSafeInteger).toBe(Number.MAX_SAFE_INTEGER);
@@ -405,7 +405,7 @@ describe('RingBufferLogger', () => {
 
     test('should handle deeply nested objects', () => {
       const deepObj = { level1: { level2: { level3: { level4: { level5: 'deep' } } } } };
-      
+
       logger.log('info', deepObj);
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data.level1.level2.level3.level4.level5).toBe('deep');
@@ -413,7 +413,7 @@ describe('RingBufferLogger', () => {
 
     test('should handle arrays with mixed types', () => {
       const mixedArray = [1, 'string', { obj: true }, [1, 2, 3], null, undefined];
-      
+
       logger.log('info', { array: mixedArray });
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data.array).toHaveLength(6); // undefined becomes null, not filtered
@@ -429,7 +429,7 @@ describe('RingBufferLogger', () => {
       logger.log('', { message: 'empty event' });
       logger.log(null, { message: 'null event' });
       logger.log(undefined, { message: 'undefined event' });
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(3);
       expect(buffer[0].event).toBe('');
@@ -444,10 +444,10 @@ describe('RingBufferLogger', () => {
       logger.log('error', { message: 'first error' });
       logger.log('error', { message: 'second error' });
       logger.log('error', { message: 'third error' });
-      
+
       const stats = logger.getStats();
       expect(stats.flushId).toBe(1); // Should only flush once for the first error
-      
+
       const files = fs.readdirSync(testLogDir);
       expect(files).toHaveLength(1);
     });
@@ -457,13 +457,13 @@ describe('RingBufferLogger', () => {
       for (let i = 0; i < 4; i++) {
         logger.log('info', { step: i });
       }
-      
+
       // Log error at exact capacity
       logger.log('error', { message: 'boundary error' });
-      
+
       const files = fs.readdirSync(testLogDir);
       expect(files).toHaveLength(1);
-      
+
       // Verify pre-error context includes all preceding logs
       const content = JSON.parse(fs.readFileSync(path.join(testLogDir, files[0]), 'utf8'));
       expect(content.events).toHaveLength(5); // 4 info + 1 error
@@ -471,15 +471,15 @@ describe('RingBufferLogger', () => {
 
     test('error followed by exact buffer wraparound', () => {
       logger.log('error', { message: 'initial error' });
-      
+
       // Fill exactly to capacity to trigger post-error flush
       for (let i = 0; i < 5; i++) {
         logger.log('info', { step: i });
       }
-      
+
       const files = fs.readdirSync(testLogDir);
       expect(files).toHaveLength(2);
-      
+
       const stats = logger.getStats();
       expect(stats.errorSeen).toBe(false);
       expect(stats.flushId).toBe(2);
@@ -488,21 +488,21 @@ describe('RingBufferLogger', () => {
     test('overlapping error cycles', () => {
       // First error
       logger.log('error', { message: 'first error' });
-      
+
       // Partially fill buffer
       for (let i = 0; i < 3; i++) {
         logger.log('info', { step: i });
       }
-      
+
       // Second error before first cycle completes
       logger.log('error', { message: 'second error' });
-      
+
       // Complete the cycle
       logger.log('info', { final: true });
-      
+
       const files = fs.readdirSync(testLogDir);
       const stats = logger.getStats();
-      
+
       // Should have handled both errors appropriately
       expect(files.length).toBeGreaterThan(0);
       expect(stats.flushId).toBeGreaterThan(1);
@@ -512,22 +512,22 @@ describe('RingBufferLogger', () => {
   describe('Performance and Stress Tests', () => {
     test('high volume logging', () => {
       const startTime = Date.now();
-      
+
       // Log 1000 entries
       for (let i = 0; i < 1000; i++) {
-        logger.log('info', { 
-          iteration: i, 
+        logger.log('info', {
+          iteration: i,
           data: `test data ${i}`,
           timestamp: Date.now()
         });
       }
-      
+
       const endTime = Date.now();
       const duration = endTime - startTime;
-      
+
       // Should complete within reasonable time (adjust threshold as needed)
       expect(duration).toBeLessThan(1000); // 1 second
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(5); // Only last 5 entries due to capacity
       expect(buffer[buffer.length - 1].data.iteration).toBe(999);
@@ -535,21 +535,21 @@ describe('RingBufferLogger', () => {
 
     test('rapid error generation', () => {
       const largeLogger = new RingBufferLogger(100, testLogDir);
-      
+
       // Generate many errors rapidly
       for (let i = 0; i < 10; i++) {
         largeLogger.log('info', { context: i });
         largeLogger.log('error', { error: i });
-        
+
         // Fill buffer to trigger post-error flush
         for (let j = 0; j < 100; j++) {
           largeLogger.log('info', { recovery: j });
         }
       }
-      
+
       const files = fs.readdirSync(testLogDir);
       expect(files.length).toBeGreaterThan(0);
-      
+
       // Should handle all errors without crashing
       const stats = largeLogger.getStats();
       expect(stats.flushId).toBeGreaterThan(0);
@@ -563,15 +563,15 @@ describe('RingBufferLogger', () => {
           level1: { level2: { level3: 'x'.repeat(5000) } }
         }
       };
-      
+
       // Log large objects multiple times
       for (let i = 0; i < 10; i++) {
         logger.log('info', { ...largeObject, iteration: i });
       }
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(5); // Should still maintain capacity
-      
+
       // Verify data sanitization worked
       expect(buffer[0].data.data).toHaveLength(1003); // Truncated + "..."
     });
@@ -598,7 +598,7 @@ describe('RingBufferLogger', () => {
       fs.mkdirSync = jest.fn(() => {
         throw new Error('Invalid directory name');
       });
-      
+
       expect(() => {
         const invalidDirLogger = new RingBufferLogger(5, './test-logs/invalid<>chars');
         invalidDirLogger.log('info', { message: 'test' });
@@ -609,7 +609,7 @@ describe('RingBufferLogger', () => {
     test('very long file paths', () => {
       const longPath = './test-logs/' + 'a'.repeat(100);
       const longPathLogger = new RingBufferLogger(5, longPath);
-      
+
       expect(() => {
         longPathLogger.log('error', { message: 'long path test' });
       }).not.toThrow();
@@ -620,7 +620,7 @@ describe('RingBufferLogger', () => {
       fs.writeSync = jest.fn(() => {
         throw new Error('ENOSPC: no space left on device');
       });
-      
+
       expect(() => {
         logger.log('error', { message: 'disk full test' });
       }).not.toThrow();
@@ -631,7 +631,7 @@ describe('RingBufferLogger', () => {
       fs.mkdirSync = jest.fn(() => {
         throw new Error('Permission denied');
       });
-      
+
       expect(() => {
         new RingBufferLogger(5, './test-logs/restricted');
       }).not.toThrow();
@@ -642,12 +642,12 @@ describe('RingBufferLogger', () => {
     test('extremely long strings at exact boundary', () => {
       const exactlyLongString = 'a'.repeat(1000);
       const tooLongString = 'a'.repeat(1001);
-      
-      logger.log('info', { 
+
+      logger.log('info', {
         exactly: exactlyLongString,
-        tooLong: tooLongString 
+        tooLong: tooLongString
       });
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data.exactly).toHaveLength(1000);
       expect(buffer[0].data.exactly.endsWith('...')).toBe(false);
@@ -661,9 +661,9 @@ describe('RingBufferLogger', () => {
       obj1.ref = obj2;
       obj2.ref = obj1;
       obj1.self = obj1;
-      
+
       logger.log('info', { circular: obj1 });
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data).toEqual({ error: 'serialization failed' });
     });
@@ -677,9 +677,9 @@ describe('RingBufferLogger', () => {
         symbolKey: 'value'
       };
       data[sym] = 'symbol value';
-      
+
       logger.log('info', data);
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data.func).toBeUndefined();
       expect(buffer[0].data.arrow).toBeUndefined();
@@ -693,9 +693,9 @@ describe('RingBufferLogger', () => {
         regex: /test/gi,
         error: new Error('test error')
       };
-      
+
       logger.log('info', data);
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer[0].data.date).toBe('2024-01-01T00:00:00.000Z');
       expect(buffer[0].data.regex).toEqual({});
@@ -709,9 +709,9 @@ describe('RingBufferLogger', () => {
         data: `item-${i}`,
         nested: { value: i * 2 }
       }));
-      
+
       logger.log('info', { array: largeArray });
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(Array.isArray(buffer[0].data.array)).toBe(true);
       expect(buffer[0].data.array).toHaveLength(10000);
@@ -719,15 +719,15 @@ describe('RingBufferLogger', () => {
   });
 
   describe('Concurrency Simulation', () => {
-    test('simulated concurrent logging', async () => {
+    test('simulated concurrent logging', async() => {
       const promises = [];
-      
+
       // Simulate concurrent logging from multiple sources
       for (let i = 0; i < 50; i++) {
         promises.push(
           new Promise(resolve => {
             setTimeout(() => {
-              logger.log('info', { 
+              logger.log('info', {
                 source: `thread-${i % 5}`,
                 message: `concurrent log ${i}`
               });
@@ -736,16 +736,16 @@ describe('RingBufferLogger', () => {
           })
         );
       }
-      
+
       await Promise.all(promises);
-      
+
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(5); // Should maintain capacity
     });
 
-    test('concurrent error and regular logging', async () => {
+    test('concurrent error and regular logging', async() => {
       const promises = [];
-      
+
       // Mix of regular logs and errors
       for (let i = 0; i < 20; i++) {
         promises.push(
@@ -761,9 +761,9 @@ describe('RingBufferLogger', () => {
           })
         );
       }
-      
+
       await Promise.all(promises);
-      
+
       // Should handle mixed logging without issues
       const stats = logger.getStats();
       expect(stats.flushId).toBeGreaterThan(0);

@@ -4,18 +4,16 @@ const path = require('path');
 
 // Benchmark utilities
 const benchmark = {
-  time: (label, fn) => {
+  time: (label) => {
     const start = process.hrtime.bigint();
-    const result = fn();
     const end = process.hrtime.bigint();
     const duration = Number(end - start) / 1000000; // Convert to milliseconds
     console.log(`${label}: ${duration.toFixed(2)}ms`);
     return duration;
   },
 
-  timeAsync: async (label, fn) => {
+  timeAsync: async(label) => {
     const start = process.hrtime.bigint();
-    const result = await fn();
     const end = process.hrtime.bigint();
     const duration = Number(end - start) / 1000000;
     console.log(`${label}: ${duration.toFixed(2)}ms`);
@@ -73,26 +71,26 @@ const benchmarks = {
     console.log(`\n=== Basic Logging Performance (${iterations.toLocaleString()} operations) ===`);
     const logDir = './benchmark-logs-basic';
     cleanup(logDir);
-    
+
     const logger = new RingBufferLogger(1000, logDir);
     const memBefore = benchmark.memoryUsage();
-    
+
     const duration = benchmark.time('Basic logging', () => {
       for (let i = 0; i < iterations; i++) {
-        logger.log('info', { 
+        logger.log('info', {
           message: `Test message ${i}`,
           timestamp: Date.now(),
           data: { value: i * 2 }
         });
       }
     });
-    
+
     const memAfter = benchmark.memoryUsage();
     console.log(`Throughput: ${benchmark.formatThroughput(iterations, duration)}`);
     console.log(`Memory before: ${memBefore.heapUsed}MB`);
     console.log(`Memory after: ${memAfter.heapUsed}MB`);
     console.log(`Memory delta: ${(memAfter.heapUsed - memBefore.heapUsed).toFixed(2)}MB`);
-    
+
     cleanup(logDir);
   },
 
@@ -100,65 +98,65 @@ const benchmarks = {
     console.log(`\n=== Error Handling Performance (${errorCount.toLocaleString()} errors) ===`);
     const logDir = './benchmark-logs-errors';
     cleanup(logDir);
-    
+
     const logger = new RingBufferLogger(100, logDir);
-    
+
     // Fill buffer with some context
     for (let i = 0; i < 50; i++) {
       logger.log('info', { context: i });
     }
-    
+
     const memBefore = benchmark.memoryUsage();
     const restore = benchmark.silentConsole();
-    
+
     const duration = benchmark.time('Error handling', () => {
       for (let i = 0; i < errorCount; i++) {
-        logger.log('error', { 
+        logger.log('error', {
           error: `Error ${i}`,
           stack: `Stack trace for error ${i}`,
           details: { code: 500, message: 'Internal error' }
         });
-        
+
         // Add some context after each error
         for (let j = 0; j < 10; j++) {
           logger.log('info', { recovery: j, errorId: i });
         }
       }
     });
-    
+
     restore();
     const memAfter = benchmark.memoryUsage();
     const totalOps = errorCount * 11; // error + 10 context logs
-    
+
     console.log(`Throughput: ${benchmark.formatThroughput(totalOps, duration)}`);
     console.log(`Errors/sec: ${benchmark.formatThroughput(errorCount, duration)}`);
     console.log(`Files created: ${fs.readdirSync(logDir).length}`);
     console.log(`Memory delta: ${(memAfter.heapUsed - memBefore.heapUsed).toFixed(2)}MB`);
-    
+
     cleanup(logDir);
   },
 
   bufferSizeComparison: () => {
-    console.log(`\n=== Buffer Size Performance Comparison ===`);
+    console.log('\n=== Buffer Size Performance Comparison ===');
     const iterations = 50000;
     const bufferSizes = [10, 100, 1000, 10000];
-    
+
     bufferSizes.forEach(size => {
       const logDir = `./benchmark-logs-size-${size}`;
       cleanup(logDir);
-      
+
       const logger = new RingBufferLogger(size, logDir);
-      
+
       const duration = benchmark.time(`Buffer size ${size}`, () => {
         for (let i = 0; i < iterations; i++) {
-          logger.log('info', { 
+          logger.log('info', {
             index: i,
             data: `Message for buffer size ${size}`,
             metadata: { size, iteration: i }
           });
         }
       });
-      
+
       console.log(`  Throughput: ${benchmark.formatThroughput(iterations, duration)}`);
       cleanup(logDir);
     });
@@ -168,9 +166,9 @@ const benchmarks = {
     console.log(`\n=== Large Data Objects Performance (${iterations.toLocaleString()} operations) ===`);
     const logDir = './benchmark-logs-large';
     cleanup(logDir);
-    
+
     const logger = new RingBufferLogger(100, logDir);
-    
+
     // Create large data objects
     const largeString = 'x'.repeat(5000);
     const largeArray = new Array(1000).fill(0).map((_, i) => ({
@@ -178,9 +176,9 @@ const benchmarks = {
       value: `item-${i}`,
       data: largeString.slice(0, 100)
     }));
-    
+
     const memBefore = benchmark.memoryUsage();
-    
+
     const duration = benchmark.time('Large data logging', () => {
       for (let i = 0; i < iterations; i++) {
         logger.log('info', {
@@ -193,27 +191,27 @@ const benchmarks = {
         });
       }
     });
-    
+
     const memAfter = benchmark.memoryUsage();
     console.log(`Throughput: ${benchmark.formatThroughput(iterations, duration)}`);
     console.log(`Memory delta: ${(memAfter.heapUsed - memBefore.heapUsed).toFixed(2)}MB`);
-    console.log(`Data sanitization overhead included`);
-    
+    console.log('Data sanitization overhead included');
+
     cleanup(logDir);
   },
 
-  concurrentSimulation: async (threads = 5, operationsPerThread = 10000) => {
+  concurrentSimulation: async(threads = 5, operationsPerThread = 10000) => {
     console.log(`\n=== Concurrent Simulation (${threads} threads, ${operationsPerThread.toLocaleString()} ops each) ===`);
     const logDir = './benchmark-logs-concurrent';
     cleanup(logDir);
-    
+
     const logger = new RingBufferLogger(1000, logDir);
     const memBefore = benchmark.memoryUsage();
     const restore = benchmark.silentConsole();
-    
-    const duration = await benchmark.timeAsync('Concurrent logging', async () => {
+
+    const duration = await benchmark.timeAsync('Concurrent logging', async() => {
       const promises = [];
-      
+
       for (let t = 0; t < threads; t++) {
         promises.push(
           new Promise(resolve => {
@@ -225,7 +223,7 @@ const benchmarks = {
                   message: `Thread ${t} operation ${i}`,
                   timestamp: Date.now()
                 });
-                
+
                 // Simulate some errors
                 if (i % 1000 === 0) {
                   logger.log('error', {
@@ -239,19 +237,19 @@ const benchmarks = {
           })
         );
       }
-      
+
       await Promise.all(promises);
     });
-    
+
     restore();
     const memAfter = benchmark.memoryUsage();
     const totalOps = threads * operationsPerThread;
-    
+
     console.log(`Total operations: ${totalOps.toLocaleString()}`);
     console.log(`Throughput: ${benchmark.formatThroughput(totalOps, duration)}`);
     console.log(`Memory delta: ${(memAfter.heapUsed - memBefore.heapUsed).toFixed(2)}MB`);
     console.log(`Files created: ${fs.readdirSync(logDir).length}`);
-    
+
     cleanup(logDir);
   },
 
@@ -259,40 +257,40 @@ const benchmarks = {
     console.log(`\n=== Flush Performance (${flushCount.toLocaleString()} flushes) ===`);
     const logDir = './benchmark-logs-flush';
     cleanup(logDir);
-    
+
     const logger = new RingBufferLogger(50, logDir);
     const memBefore = benchmark.memoryUsage();
     const restore = benchmark.silentConsole();
-    
+
     const duration = benchmark.time('Flush operations', () => {
       for (let i = 0; i < flushCount; i++) {
         // Add some context
         for (let j = 0; j < 25; j++) {
-          logger.log('info', { 
-            context: j, 
+          logger.log('info', {
+            context: j,
             flushGroup: i,
             data: `Context data for flush ${i}`
           });
         }
-        
+
         // Trigger flush with error
-        logger.log('error', { 
+        logger.log('error', {
           flushId: i,
           error: `Test error ${i}`,
           details: { timestamp: Date.now() }
         });
       }
     });
-    
+
     restore();
     const memAfter = benchmark.memoryUsage();
     const files = fs.readdirSync(logDir);
-    
+
     console.log(`Flushes/sec: ${benchmark.formatThroughput(flushCount, duration)}`);
     console.log(`Files created: ${files.length}`);
     console.log(`Avg file size: ${getAverageFileSize(logDir, files)}KB`);
     console.log(`Memory delta: ${(memAfter.heapUsed - memBefore.heapUsed).toFixed(2)}MB`);
-    
+
     cleanup(logDir);
   }
 };
@@ -307,22 +305,22 @@ const getAverageFileSize = (logDir, files) => {
       return sum;
     }
   }, 0);
-  
+
   return Math.round((totalSize / files.length / 1024) * 100) / 100;
 };
 
 // Run all benchmarks
-const runBenchmarks = async () => {
+const runBenchmarks = async() => {
   console.log('🚀 Ring Buffer Logger Performance Benchmark');
   console.log('='.repeat(50));
-  
+
   const overallStart = process.hrtime.bigint();
-  
+
   // System info
   console.log(`Node.js version: ${process.version}`);
   console.log(`Platform: ${process.platform} ${process.arch}`);
   console.log(`Initial memory: ${benchmark.memoryUsage().heapUsed}MB`);
-  
+
   try {
     benchmarks.basicLogging(100000);
     benchmarks.bufferSizeComparison();
@@ -330,14 +328,14 @@ const runBenchmarks = async () => {
     benchmarks.errorHandlingPerformance(1000);
     benchmarks.flushPerformance(500);
     await benchmarks.concurrentSimulation(5, 10000);
-    
+
     const overallEnd = process.hrtime.bigint();
     const totalDuration = Number(overallEnd - overallStart) / 1000000;
-    
+
     console.log(`\n${'='.repeat(50)}`);
     console.log(`🏁 Total benchmark time: ${totalDuration.toFixed(2)}ms`);
     console.log(`Final memory: ${benchmark.memoryUsage().heapUsed}MB`);
-    
+
   } catch (error) {
     console.error('Benchmark failed:', error);
     process.exit(1);
@@ -345,31 +343,31 @@ const runBenchmarks = async () => {
 };
 
 // Quick benchmark for faster testing
-const runQuickBenchmarks = async () => {
+const runQuickBenchmarks = async() => {
   console.log('⚡ Ring Buffer Logger Quick Benchmark');
   console.log('='.repeat(40));
-  
+
   const overallStart = process.hrtime.bigint();
-  
+
   // System info
   console.log(`Node.js version: ${process.version}`);
   console.log(`Platform: ${process.platform} ${process.arch}`);
   console.log(`Initial memory: ${benchmark.memoryUsage().heapUsed}MB`);
-  
+
   try {
     benchmarks.basicLogging(10000);
     benchmarks.largeDataPerformance(1000);
     benchmarks.errorHandlingPerformance(100);
     benchmarks.flushPerformance(50);
     await benchmarks.concurrentSimulation(3, 1000);
-    
+
     const overallEnd = process.hrtime.bigint();
     const totalDuration = Number(overallEnd - overallStart) / 1000000;
-    
+
     console.log(`\n${'='.repeat(40)}`);
     console.log(`🏁 Total benchmark time: ${totalDuration.toFixed(2)}ms`);
     console.log(`Final memory: ${benchmark.memoryUsage().heapUsed}MB`);
-    
+
   } catch (error) {
     console.error('Benchmark failed:', error);
     process.exit(1);
@@ -386,4 +384,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { benchmarks, benchmark, runQuickBenchmarks }; 
+module.exports = { benchmarks, benchmark, runQuickBenchmarks };
