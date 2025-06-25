@@ -1,0 +1,45 @@
+{ 
+  "name": "ring-buffer-logging",
+  "version": "1.0.0",
+  "description": "A ring buffer logger that captures context around errors",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "start": "node examples/demo.js",
+    "benchmark": "node benchmark/performance.js",
+    "benchmark:quick": "node benchmark/performance.js --quick",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "keywords": [
+    "logging",
+    "ring-buffer",
+    "circular-buffer",
+    "error-context",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "index.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 
