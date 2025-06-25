@@ -89,6 +89,7 @@ class RingBufferLogger {
   }
 
   _sanitize(data) {
+    if (data === null || data === undefined) return {};
     try {
       const json = JSON.stringify(data, (_, value) =>
         typeof value === 'string' && value.length > 1000

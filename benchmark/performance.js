@@ -4,16 +4,18 @@ const path = require('path');
 
 // Benchmark utilities
 const benchmark = {
-  time: (label) => {
+  time: (label, fn) => {
     const start = process.hrtime.bigint();
+    const result = fn();
     const end = process.hrtime.bigint();
     const duration = Number(end - start) / 1000000; // Convert to milliseconds
     console.log(`${label}: ${duration.toFixed(2)}ms`);
     return duration;
   },
 
-  timeAsync: async(label) => {
+  timeAsync: async(label, fn) => {
     const start = process.hrtime.bigint();
+    const result = await fn();
     const end = process.hrtime.bigint();
     const duration = Number(end - start) / 1000000;
     console.log(`${label}: ${duration.toFixed(2)}ms`);

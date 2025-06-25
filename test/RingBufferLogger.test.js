@@ -381,7 +381,8 @@ describe('RingBufferLogger', () => {
 
       const buffer = logger.getCurrentBuffer();
       expect(buffer).toHaveLength(3);
-      expect(buffer[0].data).toBeNull();
+      // null gets converted to {} by the sanitizer
+      expect(buffer[0].data).toEqual({});
       // undefined gets converted to {} by the sanitizer
       expect(buffer[1].data).toEqual({});
       expect(buffer[2].data).toEqual({ value: null });

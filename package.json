@@ -7,9 +7,13 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:all": "jest test/AllImplementations.test.js",
+    "test:original": "jest test/RingBufferLogger.test.js",
     "start": "node examples/demo.js",
     "benchmark": "node benchmark/performance.js",
     "benchmark:quick": "node benchmark/performance.js --quick",
+    "benchmark:compare": "node benchmark/three-way-comparison.js",
+    "benchmark:compare:quick": "node benchmark/three-way-comparison.js --quick",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
