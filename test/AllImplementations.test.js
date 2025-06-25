@@ -3,8 +3,8 @@ const path = require('path');
 
 // Import all three implementations
 const OriginalLogger = require('../index');
-const OptimizedLogger = require('../index-optimized');
-const UltraLogger = require('../index-ultra');
+const ObjectPooledLogger = require('../index-object-pooled');
+const BitOptimizedLogger = require('../index-bit-optimized');
 
 // Suppress console output during tests
 beforeAll(() => {
@@ -46,8 +46,8 @@ const cleanupLogDir = (logDir) => {
 // Test configurations for each implementation
 const implementations = [
   { name: 'Original', Logger: OriginalLogger, testDir: './test-original' },
-  { name: 'Optimized', Logger: OptimizedLogger, testDir: './test-optimized' },
-  { name: 'Ultra', Logger: UltraLogger, testDir: './test-ultra' }
+  { name: 'Object-Pooled', Logger: ObjectPooledLogger, testDir: './test-object-pooled' },
+  { name: 'Bit-Optimized', Logger: BitOptimizedLogger, testDir: './test-bit-optimized' }
 ];
 
 // Run tests for each implementation
@@ -69,7 +69,7 @@ implementations.forEach(({ name, Logger, testDir }) => {
         const defaultLogger = new Logger();
         const stats = defaultLogger.getStats();
 
-        expect(stats.capacity).toBeGreaterThanOrEqual(100); // Ultra version may round up to power of 2
+        expect(stats.capacity).toBeGreaterThanOrEqual(100); // Bit-optimized version may round up to power of 2
         expect(stats.currentIndex).toBe(0);
         expect(stats.flushId).toBe(0);
         expect(stats.errorSeen).toBe(false);
@@ -82,7 +82,7 @@ implementations.forEach(({ name, Logger, testDir }) => {
       test('custom parameters', () => {
         const stats = logger.getStats();
 
-        expect(stats.capacity).toBeGreaterThanOrEqual(5); // Ultra version may round up to power of 2
+        expect(stats.capacity).toBeGreaterThanOrEqual(5); // Bit-optimized version may round up to power of 2
         expect(fs.existsSync(testDir)).toBe(true);
       });
     });
@@ -140,8 +140,8 @@ implementations.forEach(({ name, Logger, testDir }) => {
         expect(testLogger.getStats().currentIndex).toBe(2);
 
         testLogger.log('info', { step: 3 });
-        // For power-of-2 implementations, index may wrap differently
-        if (capacity === 4) { // Ultra version rounds 3 up to 4
+                 // For power-of-2 implementations, index may wrap differently
+         if (capacity === 4) { // Bit-optimized version rounds 3 up to 4
           expect(testLogger.getStats().currentIndex).toBe(3);
         } else {
           expect(testLogger.getStats().currentIndex).toBe(0);

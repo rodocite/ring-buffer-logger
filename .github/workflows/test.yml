@@ -29,8 +29,17 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-      - name: Run tests
+      - name: Run original implementation tests
+        run: npm run test:original
+
+      - name: Run all implementations tests
+        run: npm run test:all
+
+      - name: Run tests with coverage
         run: npm run test:coverage
+
+      - name: Run performance benchmarks
+        run: npm run benchmark:compare:quick
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
